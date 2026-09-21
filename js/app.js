@@ -5,46 +5,24 @@
   const STORE_SETS = "sets";
   const $ = (id) => document.getElementById(id);
   const els = {
-    viewSetup: $("view-setup"),
-    viewGame: $("view-game"),
-    setList: $("set-list"),
-    setName: $("set-name"),
-    imageList: $("image-list"),
-    fileInput: $("file-input"),
-    gridCustom: $("grid-custom"),
-    timerSeconds: $("timer-seconds"),
-    startHint: $("start-hint"),
-    board: $("board"),
-    gameSetName: $("game-set-name"),
-    gameProgress: $("game-progress"),
-    gameImageName: $("game-image-name"),
-    revealCount: $("reveal-count"),
-    timerBox: $("timer-box"),
-    timerDisplay: $("timer-display"),
-    thumbStrip: $("thumb-strip"),
-    toast: $("toast"),
+    viewSetup: $("view-setup"), viewGame: $("view-game"), setList: $("set-list"),
+    setName: $("set-name"), imageList: $("image-list"), fileInput: $("file-input"),
+    gridCustom: $("grid-custom"), timerSeconds: $("timer-seconds"), startHint: $("start-hint"),
+    board: $("board"), gameSetName: $("game-set-name"), gameProgress: $("game-progress"),
+    gameImageName: $("game-image-name"), revealCount: $("reveal-count"), timerBox: $("timer-box"),
+    timerDisplay: $("timer-display"), thumbStrip: $("thumb-strip"), toast: $("toast"),
+    lotteryBall: $("lottery-ball"), lotteryHistory: $("lottery-history"), lotteryHint: $("lottery-hint"), btnDraw: $("btn-draw"),
   };
   const state = {
-    db: null,
-    images: [],
-    sets: [],
-    currentSetId: null,
-    grid: 3,
-    timerMode: "off",
-    shuffle: false,
-    toggle: true,
-    keyboard: true,
-    play: { imageIds: [], index: 0, revealed: new Set(), labels: [], startedAt: 0, remain: 0, tick: null },
+    db: null, images: [], sets: [], currentSetId: null, grid: 3, timerMode: "off",
+    shuffle: false, toggle: true, keyboard: true,
+    play: { imageIds: [], index: 0, revealed: new Set(), labels: [], startedAt: 0, remain: 0, tick: null, drawn: [], drawing: false },
   };
   function toast(msg) {
-    els.toast.textContent = msg;
-    els.toast.classList.remove("hidden");
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => els.toast.classList.add("hidden"), 2200);
+    els.toast.textContent = msg; els.toast.classList.remove("hidden");
+    clearTimeout(toast._t); toast._t = setTimeout(() => els.toast.classList.add("hidden"), 2200);
   }
-  function uid() {
-    return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
-  }
+  function uid() { return crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2); }
   function openDb() {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open(DB_NAME, DB_VER);
@@ -59,32 +37,19 @@
   }
   function txDone(tx) {
     return new Promise((resolve, reject) => {
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-      tx.onabort = () => reject(tx.error);
+      tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
     });
   }
-  async function idbPut(store, value) {
-    const tx = state.db.transaction(store, "readwrite");
-    tx.objectStore(store).put(value);
-    await txDone(tx);
-  }
-  async function idbDel(store, id) {
-    const tx = state.db.transaction(store, "readwrite");
-    tx.objectStore(store).delete(id);
-    await txDone(tx);
-  }
+  async function idbPut(store, value) { const tx = state.db.transaction(store, "readwrite"); tx.objectStore(store).put(value); await txDone(tx); }
+  async function idbDel(store, id) { const tx = state.db.transaction(store, "readwrite"); tx.objectStore(store).delete(id); await txDone(tx); }
   function idbGetAll(store) {
     return new Promise((resolve, reject) => {
       const tx = state.db.transaction(store, "readonly");
       const req = tx.objectStore(store).getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
+      req.onsuccess = () => resolve(req.result || []); req.onerror = () => reject(req.error);
     });
   }
-  function revokeUrls() {
-    state.images.forEach((img) => { if (img.url) URL.revokeObjectURL(img.url); });
-  }
+  function revokeUrls() { state.images.forEach((img) => { if (img.url) URL.revokeObjectURL(img.url); }); }
   async function loadAll() {
     const [imgs, sets] = await Promise.all([idbGetAll(STORE_IMGS), idbGetAll(STORE_SETS)]);
     revokeUrls();
@@ -98,10 +63,7 @@
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
   function renderSets() {
-    if (!state.sets.length) {
-      els.setList.innerHTML = `<li class="hint" style="padding:8px">尚未儲存組合。加入圖片後按「儲存組合」。</li>`;
-      return;
-    }
+    if (!state.sets.length) { els.setList.innerHTML = `<li class="hint" style="padding:8px">尚未儲存組合。加入圖片後按「儲存組合」。</li>`; return; }
     els.setList.innerHTML = state.sets.map((s) => {
       const n = (s.imageIds || []).length;
       const active = s.id === state.currentSetId ? "active" : "";
@@ -138,13 +100,10 @@
         const targetId = card.dataset.id;
         if (!dragId || dragId === targetId) return;
         const ids = workingIds();
-        const from = ids.indexOf(dragId);
-        const to = ids.indexOf(targetId);
+        const from = ids.indexOf(dragId); const to = ids.indexOf(targetId);
         if (from < 0 || to < 0) return;
-        ids.splice(from, 1);
-        ids.splice(to, 0, dragId);
-        renderImages();
-        persistCurrentSet(false);
+        ids.splice(from, 1); ids.splice(to, 0, dragId);
+        renderImages(); persistCurrentSet(false);
       });
     });
   }
@@ -152,43 +111,28 @@
     let set = currentSet();
     if (!set) {
       set = { id: uid(), name: els.setName.value.trim() || "未命名組合", imageIds: (state._draftIds || []).slice(), createdAt: Date.now() };
-      state.sets.unshift(set);
-      state.currentSetId = set.id;
-      state._draftIds = null;
+      state.sets.unshift(set); state.currentSetId = set.id; state._draftIds = null;
     }
     set.name = els.setName.value.trim() || "未命名組合";
-    set.grid = state.grid;
-    set.timerMode = state.timerMode;
+    set.grid = state.grid; set.timerMode = state.timerMode;
     set.timerSeconds = Number(els.timerSeconds.value) || 60;
-    set.shuffle = $("opt-shuffle").checked;
-    set.toggle = $("opt-toggle").checked;
-    set.keyboard = $("opt-keyboard").checked;
-    set.updatedAt = Date.now();
-    await idbPut(STORE_SETS, set);
-    if (showToast !== false) toast("已儲存組合");
-    renderSets();
+    set.shuffle = $("opt-shuffle").checked; set.toggle = $("opt-toggle").checked; set.keyboard = $("opt-keyboard").checked;
+    set.updatedAt = Date.now(); await idbPut(STORE_SETS, set);
+    if (showToast !== false) toast("已儲存組合"); renderSets();
   }
   async function addFiles(files) {
     const list = Array.from(files || []).filter((f) => f.type.startsWith("image/"));
     if (!list.length) return toast("請選擇圖片檔案");
     for (const file of list) {
       const rec = { id: uid(), name: file.name.replace(/\.[^.]+$/, ""), mime: file.type, blob: file, createdAt: Date.now() };
-      await idbPut(STORE_IMGS, rec);
-      rec.url = URL.createObjectURL(file);
-      state.images.push(rec);
-      workingIds().push(rec.id);
+      await idbPut(STORE_IMGS, rec); rec.url = URL.createObjectURL(file); state.images.push(rec); workingIds().push(rec.id);
     }
-    renderImages();
-    if (currentSet()) await persistCurrentSet(false);
-    toast(`已加入 ${list.length} 張圖片`);
+    renderImages(); if (currentSet()) await persistCurrentSet(false); toast(`已加入 ${list.length} 張圖片`);
   }
   function makeDemoBlob(label, c1, c2) {
-    const canvas = document.createElement("canvas");
-    canvas.width = 900; canvas.height = 900;
-    const ctx = canvas.getContext("2d");
-    const g = ctx.createLinearGradient(0, 0, 900, 900);
-    g.addColorStop(0, c1); g.addColorStop(1, c2);
-    ctx.fillStyle = g; ctx.fillRect(0, 0, 900, 900);
+    const canvas = document.createElement("canvas"); canvas.width = 900; canvas.height = 900;
+    const ctx = canvas.getContext("2d"); const g = ctx.createLinearGradient(0, 0, 900, 900);
+    g.addColorStop(0, c1); g.addColorStop(1, c2); ctx.fillStyle = g; ctx.fillRect(0, 0, 900, 900);
     for (let i = 0; i < 18; i++) {
       ctx.fillStyle = `rgba(255,255,255,${0.06 + (i % 5) * 0.03})`;
       ctx.beginPath(); ctx.arc((i * 137) % 900, (i * 211) % 900, 40 + (i % 6) * 18, 0, Math.PI * 2); ctx.fill();
@@ -202,19 +146,13 @@
     for (const [name, a, b] of specs) {
       const blob = await makeDemoBlob(name, a, b);
       const rec = { id: uid(), name, mime: "image/png", blob, createdAt: Date.now() };
-      await idbPut(STORE_IMGS, rec);
-      rec.url = URL.createObjectURL(blob);
-      state.images.push(rec);
-      workingIds().push(rec.id);
+      await idbPut(STORE_IMGS, rec); rec.url = URL.createObjectURL(blob); state.images.push(rec); workingIds().push(rec.id);
     }
-    renderImages();
-    if (currentSet()) await persistCurrentSet(false);
-    toast("已加入 3 張示範圖");
+    renderImages(); if (currentSet()) await persistCurrentSet(false); toast("已加入 3 張示範圖");
   }
   function applySetToForm(set) {
     els.setName.value = set ? set.name : "";
-    state.grid = set?.grid || 3;
-    els.gridCustom.value = state.grid;
+    state.grid = set?.grid || 3; els.gridCustom.value = state.grid;
     document.querySelectorAll("#grid-presets .chip").forEach((c) => c.classList.toggle("active", Number(c.dataset.n) === state.grid));
     state.timerMode = set?.timerMode || "off";
     document.querySelectorAll('input[name="timer-mode"]').forEach((r) => { r.checked = r.value === state.timerMode; });
@@ -223,10 +161,7 @@
     $("opt-toggle").checked = set?.toggle !== false;
     $("opt-keyboard").checked = set?.keyboard !== false;
   }
-  async function selectSet(id) {
-    state.currentSetId = id; state._draftIds = null;
-    applySetToForm(currentSet()); renderSets(); renderImages();
-  }
+  async function selectSet(id) { state.currentSetId = id; state._draftIds = null; applySetToForm(currentSet()); renderSets(); renderImages(); }
   async function newSet() {
     const set = { id: uid(), name: "新組合", imageIds: [], grid: state.grid, timerMode: state.timerMode, timerSeconds: Number(els.timerSeconds.value) || 60, shuffle: $("opt-shuffle").checked, toggle: $("opt-toggle").checked, keyboard: $("opt-keyboard").checked, createdAt: Date.now(), updatedAt: Date.now() };
     state.sets.unshift(set); await idbPut(STORE_SETS, set); await selectSet(set.id); els.setName.focus(); els.setName.select();
@@ -246,9 +181,12 @@
     renderThumbs(); loadRound(0);
   }
   function renderThumbs() {
-    els.thumbStrip.innerHTML = state.play.imageIds.map((id, i) => {
-      const img = imageById(id);
-      return `<li data-i="${i}" class="${i === state.play.index ? "active" : ""}"><img src="${img.url}" alt="" /><span>${i + 1}. ${escapeHtml(img.name)}</span></li>`;
+    const ids = state.play.imageIds || [];
+    if (!ids.length) { els.thumbStrip.innerHTML = `<li class="hint" style="border:0;background:transparent">此局沒有已加入的圖片。</li>`; return; }
+    els.thumbStrip.innerHTML = ids.map((id, i) => {
+      const img = imageById(id); const name = img?.name || "未命名圖片";
+      const thumb = img?.url ? `<img src="${img.url}" alt="${escapeHtml(name)}" />` : `<div class="thumb-ph">${i + 1}</div>`;
+      return `<li data-i="${i}" class="${i === state.play.index ? "active" : ""}">${thumb}<span>${i + 1}. ${escapeHtml(name)}</span></li>`;
     }).join("");
   }
   function shuffle(arr) {
@@ -258,8 +196,7 @@
   }
   function loadRound(index) {
     state.play.index = index;
-    const img = imageById(state.play.imageIds[index]);
-    if (!img) return;
+    const img = imageById(state.play.imageIds[index]); if (!img) return;
     const n = state.grid; const total = n * n;
     const nums = Array.from({ length: total }, (_, i) => i + 1);
     state.play.labels = state.shuffle ? shuffle(nums) : nums;
@@ -279,22 +216,56 @@
       piece.style.backgroundSize = `${n * 100}% ${n * 100}%`;
       piece.style.backgroundPosition = `${(c / (n - 1 || 1)) * 100}% ${(r / (n - 1 || 1)) * 100}%`;
       const cover = document.createElement("div"); cover.className = "cover"; cover.textContent = String(state.play.labels[i]);
-      cell.append(piece, cover);
-      cell.addEventListener("click", () => toggleCell(i));
-      els.board.appendChild(cell);
+      cell.append(piece, cover); cell.addEventListener("click", () => toggleCell(i)); els.board.appendChild(cell);
     }
-    updateRevealCount(); renderThumbs(); resetTimer();
+    updateRevealCount(); renderThumbs(); resetTimer(); resetLottery();
   }
   function toggleCell(i) {
     if (state.play.revealed.has(i)) { if (!state.toggle) return; state.play.revealed.delete(i); }
     else state.play.revealed.add(i);
-    els.board.children[i].classList.toggle("revealed", state.play.revealed.has(i));
-    updateRevealCount();
-    if (state.play.revealed.size === state.grid * state.grid) toast("全部揭示！");
+    const cell = els.board.children[i]; if (cell) cell.classList.toggle("revealed", state.play.revealed.has(i));
+    updateRevealCount(); if (state.play.revealed.size === state.grid * state.grid) toast("全部揭示！");
   }
-  function updateRevealCount() {
-    els.revealCount.textContent = `已揭示 ${state.play.revealed.size} / ${state.grid * state.grid}`;
+  function openCell(i) {
+    if (i < 0 || state.play.revealed.has(i)) return false;
+    state.play.revealed.add(i); const cell = els.board.children[i]; if (cell) cell.classList.add("revealed");
+    updateRevealCount(); if (state.play.revealed.size === state.grid * state.grid) toast("全部揭示！"); return true;
   }
+  function closedNumbers() {
+    const out = []; state.play.labels.forEach((num, i) => { if (!state.play.revealed.has(i)) out.push(num); }); return out;
+  }
+  function resetLottery() {
+    state.play.drawn = []; state.play.drawing = false; if (!els.lotteryBall) return;
+    els.lotteryBall.textContent = "?"; els.lotteryBall.classList.remove("spinning", "hit");
+    els.lotteryHistory.textContent = "尚未抽籤";
+    els.lotteryHint.textContent = `可抽號碼：1–${state.grid * state.grid}（只抽未開啟的格）`;
+    if (els.btnDraw) els.btnDraw.disabled = false;
+  }
+  function renderLotteryHistory() {
+    els.lotteryHistory.textContent = state.play.drawn.length ? "已抽：" + state.play.drawn.join("、") : "尚未抽籤";
+  }
+  function drawNumber() {
+    if (state.play.drawing) return;
+    const pool = closedNumbers();
+    if (!pool.length) { toast("所有號碼都已開啟"); return; }
+    const result = pool[Math.floor(Math.random() * pool.length)];
+    state.play.drawing = true; els.btnDraw.disabled = true;
+    els.lotteryBall.classList.add("spinning"); els.lotteryBall.classList.remove("hit");
+    const start = Date.now();
+    const spin = setInterval(() => {
+      els.lotteryBall.textContent = String(pool[Math.floor(Math.random() * pool.length)]);
+      if (Date.now() - start > 1100) {
+        clearInterval(spin);
+        els.lotteryBall.textContent = String(result);
+        els.lotteryBall.classList.remove("spinning"); els.lotteryBall.classList.add("hit");
+        state.play.drawn.push(result); renderLotteryHistory();
+        openCell(state.play.labels.indexOf(result));
+        toast(`抽中 ${result} 號，已開啟該格`);
+        state.play.drawing = false; els.btnDraw.disabled = false;
+      }
+    }, 70);
+  }
+  function updateRevealCount() { els.revealCount.textContent = `已揭示 ${state.play.revealed.size} / ${state.grid * state.grid}`; }
   function revealAll(show) {
     const total = state.grid * state.grid;
     state.play.revealed = show ? new Set(Array.from({ length: total }, (_, i) => i)) : new Set();
@@ -328,9 +299,9 @@
     if (e.target.matches("input, textarea")) return;
     if (e.key === "ArrowRight") { $("btn-next").click(); return; }
     if (e.key === "ArrowLeft") { $("btn-prev").click(); return; }
+    if (e.key === " " || e.code === "Space") { e.preventDefault(); drawNumber(); return; }
     if (!/^[1-9]$/.test(e.key)) return;
-    const idx = state.play.labels.indexOf(Number(e.key));
-    if (idx >= 0) toggleCell(idx);
+    const idx = state.play.labels.indexOf(Number(e.key)); if (idx >= 0) toggleCell(idx);
   }
   function bindUi() {
     $("btn-new-set").addEventListener("click", newSet);
@@ -340,6 +311,8 @@
     $("btn-exit").addEventListener("click", exitGame);
     $("btn-reveal-all").addEventListener("click", () => revealAll(true));
     $("btn-hide-all").addEventListener("click", () => revealAll(false));
+    $("btn-draw").addEventListener("click", drawNumber);
+    $("opt-hide-thumbs").addEventListener("change", (e) => els.thumbStrip.classList.toggle("hide-preview", e.target.checked));
     $("btn-next").addEventListener("click", () => loadRound((state.play.index + 1) % state.play.imageIds.length));
     $("btn-prev").addEventListener("click", () => loadRound((state.play.index - 1 + state.play.imageIds.length) % state.play.imageIds.length));
     els.fileInput.addEventListener("change", async (e) => { await addFiles(e.target.files); e.target.value = ""; });
@@ -358,8 +331,7 @@
       const id = item.dataset.id; const act = e.target.dataset.act;
       if (act === "del") {
         if (!confirm("刪除此組合？（圖片檔仍會保留在本機）")) return;
-        await idbDel(STORE_SETS, id);
-        state.sets = state.sets.filter((s) => s.id !== id);
+        await idbDel(STORE_SETS, id); state.sets = state.sets.filter((s) => s.id !== id);
         if (state.currentSetId === id) { state.currentSetId = state.sets[0]?.id || null; applySetToForm(currentSet()); }
         renderSets(); renderImages(); return;
       }
