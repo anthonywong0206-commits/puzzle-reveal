@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f3d3e" />
+  <title>揭示拼圖｜圖片格仔遊戲</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <section id="view-setup" class="view">
+      <header class="topbar">
+        <div class="brand">
+          <span class="logo" aria-hidden="true">▣</span>
+          <div>
+            <h1>揭示拼圖</h1>
+            <p class="tagline">上載圖片 · 自動切格 · 點格顯示 · 計時挑戰</p>
+          </div>
+        </div>
+      </header>
+      <main class="setup-grid">
+        <aside class="panel sets-panel">
+          <div class="panel-head">
+            <h2>圖片組合</h2>
+            <button id="btn-new-set" class="btn ghost sm" type="button">＋ 新增組合</button>
+          </div>
+          <p class="hint">預先儲存多張圖片的出題次序，之後可隨時調換。</p>
+          <ul id="set-list" class="set-list"></ul>
+        </aside>
+        <section class="panel editor-panel">
+          <div class="panel-head">
+            <input id="set-name" class="set-name" type="text" maxlength="40" placeholder="組合名稱（例如：中秋猜圖）" />
+            <button id="btn-save-set" class="btn primary sm" type="button">儲存組合</button>
+          </div>
+          <div class="upload-row">
+            <label class="upload-box" for="file-input">
+              <input id="file-input" type="file" accept="image/*" multiple hidden />
+              <strong>上載圖片</strong>
+              <span>可一次選多張 · JPG / PNG / WEBP / GIF</span>
+            </label>
+            <button id="btn-demo" class="btn ghost" type="button">加入示範圖</button>
+          </div>
+          <div id="image-list" class="image-list empty">
+            <p class="empty-msg">尚未加入圖片。上載後可用拖曳調整出題次序。</p>
+          </div>
+          <div class="settings">
+            <fieldset>
+              <legend>格仔大小</legend>
+              <div class="chip-row" id="grid-presets">
+                <button type="button" data-n="2" class="chip">2×2</button>
+                <button type="button" data-n="3" class="chip active">3×3</button>
+                <button type="button" data-n="4" class="chip">4×4</button>
+                <button type="button" data-n="5" class="chip">5×5</button>
+                <button type="button" data-n="6" class="chip">6×6</button>
+              </div>
+              <label class="inline">自訂
+                <input id="grid-custom" type="number" min="2" max="10" value="3" />
+                × 列／行（2–10）
+              </label>
+            </fieldset>
+            <fieldset>
+              <legend>計時</legend>
+              <label class="inline"><input type="radio" name="timer-mode" value="off" checked /> 關閉</label>
+              <label class="inline"><input type="radio" name="timer-mode" value="stopwatch" /> 正計時</label>
+              <label class="inline"><input type="radio" name="timer-mode" value="countdown" /> 倒數</label>
+              <label class="inline">秒數 <input id="timer-seconds" type="number" min="5" max="3600" value="60" /></label>
+            </fieldset>
+            <fieldset>
+              <legend>玩法</legend>
+              <label class="inline"><input id="opt-shuffle" type="checkbox" /> 打亂格仔編號</label>
+              <label class="inline"><input id="opt-toggle" type="checkbox" checked /> 再點一次可重新遮蓋</label>
+              <label class="inline"><input id="opt-keyboard" type="checkbox" checked /> 鍵盤 1–9 對應格仔</label>
+            </fieldset>
+          </div>
+          <div class="start-row">
+            <button id="btn-start" class="btn primary xl" type="button">開始遊戲</button>
+            <p id="start-hint" class="hint">至少需要一張圖片。</p>
+          </div>
+        </section>
+      </main>
+    </section>
+    <section id="view-game" class="view hidden">
+      <header class="game-bar">
+        <button id="btn-exit" class="btn ghost sm" type="button">← 返回設定</button>
+        <div class="game-meta">
+          <strong id="game-set-name">組合</strong>
+          <span id="game-progress">1 / 1</span>
+        </div>
+        <div id="timer-box" class="timer off">
+          <span class="timer-label">計時</span>
+          <span id="timer-display">00:00</span>
+        </div>
+      </header>
+      <div class="game-stage">
+        <aside class="game-side">
+          <p class="side-label">本輪圖片</p>
+          <h2 id="game-image-name">圖片</h2>
+          <p id="reveal-count" class="hint">已揭示 0 / 9</p>
+          <div class="side-actions">
+            <button id="btn-reveal-all" class="btn ghost" type="button">全部揭示</button>
+            <button id="btn-hide-all" class="btn ghost" type="button">重新遮蓋</button>
+            <button id="btn-prev" class="btn ghost" type="button">上一張</button>
+            <button id="btn-next" class="btn primary" type="button">下一張</button>
+          </div>
+          <ol id="thumb-strip" class="thumb-strip"></ol>
+        </aside>
+        <div class="board-wrap">
+          <div id="board" class="board" role="grid" aria-label="拼圖格仔"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="js/app.js"></script>
+</body>
+</html>
