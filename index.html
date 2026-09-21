@@ -100,11 +100,22 @@
           <p class="side-label">本輪圖片</p>
           <h2 id="game-image-name">圖片</h2>
           <p id="reveal-count" class="hint">已揭示 0 / 9</p>
+          <section class="lottery" aria-label="號碼抽籤">
+            <p class="side-label">號碼抽籤</p>
+            <div id="lottery-ball" class="lottery-ball" aria-live="polite">?</div>
+            <p id="lottery-hint" class="hint">隨機抽出未開啟的號碼並自動開格</p>
+            <button id="btn-draw" class="btn primary" type="button">抽籤開格</button>
+            <p id="lottery-history" class="lottery-history">尚未抽籤</p>
+          </section>
           <div class="side-actions">
             <button id="btn-reveal-all" class="btn ghost" type="button">全部揭示</button>
             <button id="btn-hide-all" class="btn ghost" type="button">重新遮蓋</button>
             <button id="btn-prev" class="btn ghost" type="button">上一張</button>
             <button id="btn-next" class="btn primary" type="button">下一張</button>
+          </div>
+          <div class="playlist-head">
+            <p class="side-label">已加入的圖片</p>
+            <label class="inline tight"><input id="opt-hide-thumbs" type="checkbox" /> 隱藏縮圖</label>
           </div>
           <ol id="thumb-strip" class="thumb-strip"></ol>
         </aside>
